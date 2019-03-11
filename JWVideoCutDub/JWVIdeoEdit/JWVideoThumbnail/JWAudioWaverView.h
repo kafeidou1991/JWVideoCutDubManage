@@ -38,5 +38,7 @@
 //
 
 @property (nonatomic, readonly) NSMutableArray * waves;
+//结束调用，否则CADisLink无法被释放
+- (void)endWave;
 
 @end

@@ -67,16 +67,13 @@ if (![[NSFileManager defaultManager]fileExistsAtPath:path]) {\
 
 //MARK: 录音配置
 - (void)configRecorder {
-    //设置录音模式
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
-    
     NSURL *fileUrl = [NSURL fileURLWithPath:[self filePathWithName]];
     NSError *error = nil;
     NSDictionary *setting = [self recordSetting];
-    _recorder = [[AVAudioRecorder alloc] initWithURL:fileUrl settings:setting error:&error];
-    _recorder.delegate = self;
-    _recorder.meteringEnabled = YES;
-    if ([_recorder prepareToRecord]) {
+    self.recorder = [[AVAudioRecorder alloc] initWithURL:fileUrl settings:setting error:&error];
+    self.recorder.delegate = self;
+    self.recorder.meteringEnabled = YES;
+    if ([self.recorder prepareToRecord]) {
     }
     NSLog(@"error>>>>>>>>%@",error);
 }
@@ -100,7 +97,7 @@ if (![[NSFileManager defaultManager]fileExistsAtPath:path]) {\
 }
 // Document目录
 - (NSString *)filePathWithName{
-    NSString *urlStr = [kCachesVideoStorageEdit stringByAppendingPathComponent:kDubAudioPath];
+    NSString *urlStr = [self getAudioPath];
     if ([[NSFileManager defaultManager] fileExistsAtPath:urlStr]){
         [[NSFileManager defaultManager] removeItemAtPath:urlStr error:nil];
     }
@@ -111,36 +108,39 @@ if (![[NSFileManager defaultManager]fileExistsAtPath:path]) {\
 }
 //MARK: 开启录音 或者暂停录音
 - (void)startAudioRecorder {
-    if (_recorder) {
-        if (!_recorder.isRecording) {
-            [_recorder record];
-            NSLog(@"录音开始");
-        }
+    //设置录音模式
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
+    //设置录音模式
+    [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+    //启动该会话
+    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    if (_recorder && !_recorder.isRecording) {
+        [_recorder record];
+        NSLog(@"录音开始");
     }
 }
 -(void)pauseAudioRecorder {
-    if (_recorder) {
-        if (_recorder.isRecording) {
-            [_recorder pause];
-        }
+    if (_recorder && _recorder.isRecording) {
+        [_recorder pause];
     }
 }
 -(void)stopAudioRecorder {
-    if (_recorder) {
+    if (_recorder && _recorder.isRecording) {
         [_recorder stop];
         NSLog(@"录音结束");
+        [[AVAudioSession sharedInstance] setActive:NO error:nil];
     }
 }
 - (void)play {
     AVAudioSession *audioSession = [AVAudioSession sharedInstance];
+    //设置播放模式
     [audioSession setCategory:AVAudioSessionCategoryPlayback error:nil];
-    
     NSError *error;
-    NSURL *audioInputUrl = [NSURL fileURLWithPath:[kCachesVideoStorageEdit stringByAppendingPathComponent:kDubAudioPath]];
-    
+    NSURL *audioInputUrl = [NSURL fileURLWithPath:[self getAudioPath]];
     self.audioPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:audioInputUrl error:&error];
     NSLog(@"error----%@",error);
     self.audioPlayer.numberOfLoops = 0;
+    [self.audioPlayer prepareToPlay];
     [self.audioPlayer play];
 }
 
@@ -160,7 +160,7 @@ if (![[NSFileManager defaultManager]fileExistsAtPath:path]) {\
 }
 -(void)audioRecorderEncodeErrorDidOccur:(AVAudioRecorder *)recorder error:(NSError *)error {
     NSLog(@"<<<<<<<<<<<<<<<%@",error);
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+//    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayAndRecord error:nil];
 }
 
 

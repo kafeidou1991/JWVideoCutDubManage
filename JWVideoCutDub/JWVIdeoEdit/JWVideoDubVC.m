@@ -123,6 +123,7 @@
                         weakSelf.audioWaveView.waverLevelCallback = ^(JWAudioWaverView *waver) {
                             [[JWAudioEditManage shareInstance].recorder updateMeters];
                             CGFloat normalizedValue = pow (10, [[JWAudioEditManage shareInstance].recorder averagePowerForChannel:0] / 40);
+                            NSLog(@"normalizedValue=<%g>",normalizedValue);
                             waver.level = normalizedValue;
                         };
                         //播放源
@@ -204,6 +205,8 @@
     
 }
 - (void)dismiss {
+    //防止退出
+    [[JWAudioEditManage shareInstance]stopAudioRecorder];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 - (IBAction)pauseOrPlayClick:(UIButton *)sender {
@@ -242,7 +245,7 @@
         //保存相册核心代码
         UISaveVideoAtPathToSavedPhotosAlbum(urllStr, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
     }
-    
+
 }
 //保存视频完成之后的回调
 - (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
@@ -260,6 +263,10 @@
         [[NSNotificationCenter defaultCenter]removeObserver:self];
         [self.playerLayer.player removeTimeObserver:self.timeObserver];
         self.player = nil;
+    }
+    if (self.audioWaveView) {
+        [self.audioWaveView endWave];
+        self.audioWaveView = nil;
     }
 }
 

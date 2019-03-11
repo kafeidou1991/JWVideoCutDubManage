@@ -95,6 +95,12 @@
     }
     
 }
+- (void)endWave {
+    if (_displayLink) {
+        [_displayLink invalidate];
+        _displayLink = nil;
+    }
+}
 
 - (void)invokeWaveCallback
 {
@@ -153,9 +159,12 @@
     UIGraphicsEndImageContext();
 }
 
-- (void)dealloc
-{
-    [_displayLink invalidate];
+- (void)dealloc {
+    
+    if (_displayLink) {
+        [_displayLink invalidate];
+        _displayLink = nil;
+    }
 }
 
 @end
